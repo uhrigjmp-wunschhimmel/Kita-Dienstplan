@@ -1,319 +1,81 @@
-<!doctype html>
-<html lang="de">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kita-Dienstplan-Rechner</title>
-<style>
-:root{--bg:#f6f7fb;--card:#fff;--ink:#1f2937;--muted:#6b7280;--accent:#2563eb;--ok:#16a34a;--warn:#d97706;--bad:#dc2626}
-*{box-sizing:border-box}
-body{margin:0;font-family:system-ui,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
-.wrap{max-width:1200px;margin:0 auto;padding:24px}
-h1{font-size:22px;margin:0 0 4px}
-p.sub{color:var(--muted);margin:0 0 20px}
-.grid{display:grid;grid-template-columns:340px 1fr;gap:20px}
-@media(max-width:900px){.grid{grid-template-columns:1fr}}
-.card{background:var(--card);border:1px solid #e5e7eb;border-radius:14px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
-h2{font-size:15px;margin:0 0 12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
-label{display:block;font-size:13px;font-weight:600;margin:10px 0 4px}
-input,select{width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:14px}
-.row{display:flex;gap:10px}
-.row>div{flex:1}
-button{margin-top:16px;width:100%;padding:11px;background:var(--accent);color:#fff;border:0;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer}
-button:hover{filter:brightness(1.05)}
-.hint{font-size:12px;color:var(--muted);margin-top:4px}
-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
-th,td{border:1px solid #e5e7eb;padding:7px 8px;text-align:left;vertical-align:top}
-th{background:#f3f4f6;font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:#374151}
-td small{color:var(--muted)}
-.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700}
-.b-ok{background:#dcfce7;color:#166534}.b-warn{background:#fef3c7;color:#92400e}.b-bad{background:#fee2e2;color:#991b1b}
-.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
-.kpi div{background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:10px}
-.kpi b{display:block;font-size:20px}
-.kpi span{font-size:12px;color:var(--muted)}
-.warnbox{margin-top:12px;padding:10px 12px;border-radius:10px;font-size:13px}
-.w-bad{background:#fee2e2;color:#991b1b}.w-warn{background:#fef3c7;color:#92400e}.w-ok{background:#dcfce7;color:#166534}
-.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:10px}
-.dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:middle}
-</style>
-</head>
-<body>
-<div class="wrap">
-<h1>Kita-Dienstplan-Rechner</h1>
-<p class="sub">Stunden und Rahmenbedingungen eingeben – das Tool verteilt die Dienste und prüft Kernzeit, Öffnungszeit und Wünsche.</p>
-<div class="grid">
-<div class="card">
-<h2>Einstellungen</h2>
-<label>Kita öffnet</label><input type="time" id="open" value="08:00">
-<label>Kita schließt</label><input type="time" id="close" value="16:00">
-<label>Kernzeit von</label><input type="time" id="coreStart" value="10:00">
-<label>Kernzeit bis</label><input type="time" id="coreEnd" value="14:30">
-<div class="row">
-<div><label>Erz. nötig (Kernzeit)</label><input type="number" id="coreNeed" value="2" min="1" max="4"></div>
-<div><label>Erz. nötig (sonst)</label><input type="number" id="baseNeed" value="1" min="1" max="4"></div>
-</div>
-<hr style="border:none;border-top:1px solid #e5e7eb;margin:14px 0">
-<h2>Erzieherin 1</h2>
-<label>Wochenstunden</label><input type="number" id="h1" value="22" min="0" step="0.5">
-<label>Frühester Beginn</label><input type="time" id="s1" value="08:00">
-<label>Spätester Beginn</label><input type="time" id="ls1" value="08:00">
-<label>Mittwoch endet spätestens</label><input type="time" id="we1" value="12:30">
-<label>Max. Tage pro Woche</label><input type="number" id="d1" value="5" min="1" max="5">
-<h2>Erzieherin 2</h2>
-<label>Wochenstunden</label><input type="number" id="h2" value="24" min="0" step="0.5">
-<label>Frühester Beginn</label><input type="time" id="s2" value="08:30">
-<label>Möchte ganze Tage</label>
-<select id="whole2"><option value="1">Ja – möglichst ganze Tage</option><option value="0">Nein – Blöcke erlaubt</option></select>
-<label>Max. Tage pro Woche</label><input type="number" id="d2" value="4" min="1" max="5">
-<h2>Erzieherin 3</h2>
-<label>Wochenstunden (0 = automatisch)</label><input type="number" id="h3" value="0" min="0" step="0.5">
-<label>Frühester Beginn</label><input type="time" id="s3" value="08:00">
-<label>Max. Tage pro Woche</label><input type="number" id="d3" value="5" min="1" max="5">
-<label>Pufferstunden zusätzlich</label><input type="number" id="buf" value="0" min="0" step="0.5">
-<div class="hint">Puffer = zusätzliche E3-Stunden für Krankheit/Vertretung, die nicht als Besetzung geplant werden.</div>
-<button onclick="calc()">Dienstplan berechnen</button>
-</div>
-<div class="card">
-<h2>Ergebnis</h2>
-<div id="kpis" class="kpi"></div>
-<div id="msg"></div>
-<div id="plan"></div>
-<div class="legend">
-<span><span class="dot" style="background:#bfdbfe"></span>E1</span>
-<span><span class="dot" style="background:#fde68a"></span>E2</span>
-<span><span class="dot" style="background:#bbf7d0"></span>E3</span>
-<span><span class="dot" style="background:#e5e7eb"></span>Lücke</span>
-</div>
-</div>
-</div>
-</div>
+<!doctype html><html lang="de"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Kita-Planer – Version 2</title>
+<style>body{font:15px system-ui;color:#183044;background:#eef3f7;margin:0}main{max-width:1150px;margin:auto;padding:24px}section{background:white;padding:20px;margin:16px 0;border-radius:12px}h1{margin-bottom:5px}h2{font-size:20px}input,select,button{font:inherit;padding:7px;border:1px solid #b3c4d0;border-radius:5px}input[type=number]{width:75px}input[type=time]{width:100px}button{background:#176ba0;color:white;cursor:pointer;margin:8px 5px 8px 0}table{border-collapse:collapse;width:100%;margin:12px 0}td,th{border:1px solid #d6e0e7;padding:8px;text-align:left} .scroll{overflow:auto}.row{display:flex;gap:18px;flex-wrap:wrap}.box{padding:12px;background:#eaf2fa;margin:10px 0}.bad{background:#ffe6e4}.ok{background:#def3e5}small{color:#526779}label{display:inline-block;margin:6px}summary{cursor:pointer}#result{scroll-margin-top:15px}@media print{.settings,button{display:none}body{background:white}section{padding:0}}</style>
+<main><h1>Kita-Dienstplaner</h1><small>Version 2 · lokale Berechnung · 30-Minuten-Raster · keine externen Bibliotheken</small>
+<section class="settings"><h2>1. Besetzungsregeln</h2><div class="row"><label>Öffnung <input id="op" type="time" step="1800" value="08:00"></label><label>Schließung <input id="cl" type="time" step="1800" value="16:00"></label><label>Kernzeit ab <input id="cs" type="time" step="1800" value="10:00"></label><label>Kernzeit bis <input id="ce" type="time" step="1800" value="14:30"></label></div><label>Erzieherinnen außerhalb Kernzeit <input id="bn" type="number" min="1" max="3" value="1"></label><label>Erzieherinnen in Kernzeit <input id="cn" type="number" min="1" max="3" value="2"></label><p>Bufdi und Aushilfen zählen nicht zur geforderten Erzieherinnenbesetzung.</p>
+<h2>2. Stunden und Wünsche</h2><div class="scroll"><table><thead><tr><th>Person</th><th>Wochenstunden</th><th>Max. Tage</th><th>Wunsch</th></tr></thead><tbody id="staff"></tbody></table></div><p><label><input id="auto" type="checkbox" checked> E3-Stunden automatisch suchen</label><label>Zusätzliche E3-Stunden über gefundene Lösung hinaus <input id="reserve" type="number" value="0" min="0" step="0.5"></label></p><small>Zusatzstunden sind nicht verplant und keine garantierte Ausfallvertretung. Bei automatischer E3-Suche wird versucht, deren geplante Stunden zu minimieren; ein globales Minimum ist nicht garantiert.</small>
+<h2>3. Verfügbarkeiten pro Tag</h2><p>Ein leerer „Arbeitet“-Haken sperrt den Tag. Beginn/Ende sind harte Grenzen. Ein optionaler fester Dienstbeginn gilt an jedem tatsächlich gearbeiteten Tag.</p><div id="avail"></div>
+<button id="run" onclick="solve()">Plan berechnen</button><button onclick="saveSettings()">Einstellungen exportieren</button><label>Einstellungen laden <input type="file" accept="application/json" onchange="loadSettings(this)"></label><p><small>Die Einstellungen werden zusätzlich in diesem Browser gespeichert. Andere Nutzer sehen sie nicht automatisch. Für eine gemeinsame Variante die Einstellungsdatei weitergeben.</small></p></section>
+<section id="result"><h2>Ergebnis</h2><p>Noch kein Plan berechnet.</p></section>
+<section><h2>Grenzen dieses Planers</h2><ul><li>Alle Zeiten und Stunden müssen im 30-Minuten-Raster liegen.</li><li>Pro Person und Tag wird höchstens ein zusammenhängender Dienst geplant. Keine geteilten Dienste.</li><li>Geplant wird Anwesenheit in der Betreuung. Pausen, Vorbereitungszeit, Teamzeit, Urlaub und Krankheit sind nicht enthalten. Dienste sind keine automatisch geprüften arbeitsrechtlichen Schichten.</li><li>Die Suchroutine prüft viele Kombinationen, ist aber heuristisch. „Kein passender Plan gefunden“ beweist nicht, dass kein Plan existiert.</li><li>Die Statusprüfung kontrolliert Besetzung, Verfügbarkeiten, Tageslimits und Wochenstunden separat. Nur wenn alles erfüllt ist, erscheint ein grüner Status.</li><li>Ein gültiger Plan bietet ohne weitere Kräfte keinen automatischen Schutz vor Ausfällen. Keine rechtliche Prüfung des landesspezifischen Personalschlüssels.</li></ul></section></main>
 <script>
-const DAYS=["Montag","Dienstag","Mittwoch","Donnerstag","Freitag"];
-const toMin=t=>{const[a,b]=t.split(":").map(Number);return a*60+b};
-const toStr=m=>String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");
-const fmtH=m=>(m/60).toFixed(1).replace(".",",");
-function g(id){return document.getElementById(id).value}
-function calc(){
-const open=toMin(g("open")),close=toMin(g("close")),cs=toMin(g("coreStart")),ce=toMin(g("coreEnd"));
-const baseNeed=+g("baseNeed"),coreNeed=+g("coreNeed");
-const staff=[
-{id:1,name:"E1",h:+g("h1"),s:toMin(g("s1")),ls:toMin(g("ls1")),we:toMin(g("we1")),d:+g("d1")},
-{id:2,name:"E2",h:+g("h2"),s:toMin(g("s2")),ls:toMin(g("s2")),we:close,d:+g("d2"),whole:g("whole2")==="1"},
-{id:3,name:"E3",h:+g("h3"),s:toMin(g("s3")),ls:toMin(g("s3")),we:close,d:+g("d3")}
-];
-const buf=+g("buf");
-// Bedarf je 30-min-Slot
-const slots=[];for(let t=open;t<close;t+=30)slots.push(t);
-const need=slots.map(t=>(t>=cs&&t<ce)?coreNeed:baseNeed);
-const covered=slots.map(()=>0);
-const shifts={1:[],2:[],3:[]};
-const daysUsed={1:new Set(),2:new Set(),3:new Set()};
-// Priorität: E1 Vormittag (früh), E2 ganze Tage, E3 Rest
-function addShift(st,day,start,end){
-if(end<=start)return false;
-if(daysUsed[st.id].has(day)&&false)return false;
-if(!daysUsed[st.id].has(day)&&daysUsed[st.id].size>=st.d)return false;
-let used=0;
-for(let t=start;t<end;t+=30){const i=slots.indexOf(t);if(i<0)continue;if(covered[i]<need[i]){covered[i]++;used+=30}}
-if(used===0)return false;
-shifts[st.id].push({day,start,end,eff:used});
-daysUsed[st.id].add(day);
-st.h-=used/60;
-return true;
+'use strict';
+const days=['Montag','Dienstag','Mittwoch','Donnerstag','Freitag'];
+const $=id=>document.getElementById(id),num=id=>Number($(id).value),tm=x=>{let a=x.split(':').map(Number);return a[0]*60+a[1]},clock=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'),hours=x=>(x/2).toLocaleString('de-DE',{maximumFractionDigits:1}),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+for(let p=0;p<3;p++){
+$('staff').insertAdjacentHTML('beforeend',`<tr><td>E${p+1}</td><td><input id="h${p}" type="number" step="0.5" min="0" value="${[22,26,16][p]}"></td><td><input id="d${p}" type="number" min="0" max="5" value="${p===1?4:5}"></td><td><select id="pref${p}"><option value="none">Keine Präferenz</option><option value="compact" ${p===1?'selected':''}>Wenige, lange Tage</option></select></td></tr>`);
+let rows='';for(let d=0;d<5;d++)rows+=`<tr><td>${days[d]}</td><td><input id="a${p}${d}" type="checkbox" checked></td><td><input id="s${p}${d}" type="time" step="1800" value="${p===1?'08:30':'08:00'}"></td><td><input id="e${p}${d}" type="time" step="1800" value="${p===0&&d===2?'12:00':'16:00'}"></td></tr>`;
+$('avail').insertAdjacentHTML('beforeend',`<details ${p===0?'open':''}><summary>E${p+1} – Tagesgrenzen</summary><label>Fester Beginn, optional <input id="fix${p}" type="time" step="1800"></label><div class="scroll"><table><tr><th>Tag</th><th>Arbeitet möglich</th><th>Frühestens</th><th>Spätestens</th></tr>${rows}</table></div></details>`);
 }
-// E1: Morgenblöcke, Mittwoch respektieren
-for(const st of [staff[0]]){
-// Mittwoch zuerst
-if(st.h>0){let end=Math.min(close,st.we);let start=Math.max(open,st.s);
-// E1 Mittwoch: von früh bis Wunschende
-if(addShift(st,2,start,end)){}
-}
-for(const day of [0,1,3,4]){if(st.h<=0)break;
-let start=Math.max(open,st.s),end=Math.min(close,Math.max(cs,start+30));
-// E1 Vormittag: bis Kernzeitende oder solange Stunden da
-let target=Math.min(close,ce);
-let avail=Math.round(st.h*60);
-end=Math.min(target,start+Math.max(30,Math.floor(avail/30)*30));
-addShift(st,day,start,end);
-}
-// E1 Reststunden nachmittags falls übrig
-for(const day of [0,1,2,3,4]){if(st.h<=0.01)break;
-let start=ce,end=Math.min(close,ce+Math.round(st.h*60/30)*30);
-if(end>start)addShift(st,day,start,end);
-}
-}
-// E2: ganze Tage wenn gewünscht
-const e2=staff[1];
-if(e2.h>0&&e2.whole){
-for(const day of [0,1,3,4,2]){if(e2.h<=0)break;
-let start=Math.max(open,e2.s),end=close;
-let avail=Math.round(e2.h*60);
-if(avail<end-start){ // letzter Tag kürzer
-end=start+Math.floor(avail/30)*30;
-}
-if(end-start>=240)addShift(e2,day,start,end);
-}
-// Mittwoch-Block falls noch Stunden und Mittwoch nicht ganz
-if(e2.h>0&&!daysUsed[2].has(2)){
-let start=Math.max(cs,e2.s),end=Math.min(ce,cs+Math.round(e2.h*60/30)*30);
-addShift(e2,2,start,end);
-}
-} else if(e2.h>0){
-// Blöcke: Kernzeit + Nachmittag
-for(const day of [0,1,3,4,2]){if(e2.h<=0)break;
-let start=Math.max(cs,e2.s),end=Math.min(ce,cs+Math.round(e2.h*60/30)*30);
-if(end>start)addShift(e2,day,start,end);
-}
-for(const day of [0,1,3,4,2]){if(e2.h<=0)break;
-let start=ce,end=Math.min(close,ce+Math.round(e2.h*60/30)*30);
-if(end>start)addShift(e2,day,start,end);
-}
-}
-// E3: Rest auffüllen, längste Lücken zuerst
-const e3=staff[2];
-let iter=0;
-while(iter++<200){
-// finde Lücken
-let gaps=[];
-for(const day of [0,1,2,3,4]){
-let run=null;
-for(let i=0;i<slots.length;i++){
-const t=slots[i];
-const isDay=day===Math.floor((t-open)/(24*60)); // slots sind global; stattdessen pro Tag neu
-}
-}
-break;
-}
-// Einfacher: pro Tag Lücken füllen
-for(const day of [0,1,2,3,4]){
-if(e3.h<=0.01)break;
-if(daysUsed[3].size>=e3.d&&!daysUsed[3].has(day))continue;
-let start=null;
-for(let i=0;i<slots.length;i++){
-const t=slots[i];
-const idx=i; // slots global, aber wir behandeln jeden Slot einmal; Tageszuordnung über Wochentag nicht nötig da 5 Tage × slots? 
-}
-}
-// Da slots global über die Woche gehen müssten, korrigieren: baue slots pro Tag
-// Neu: korrekte Slotstruktur
-const daySlots=DAYS.map(()=>[]);
-for(let d=0;d<5;d++)for(let t=open;t<close;t+=30)daySlots[d].push(t);
-const cov=DAYS.map(()=>({}));
-for(let d=0;d<5;d++)for(const t of daySlots[d])cov[d][t]=0;
-const sh={1:[],2:[],3:[]};const used={1:new Set(),2:new Set(),3:new Set()};
-const st2={1:{...staff[0],h:+g("h1")},2:{...staff[1],h:+g("h2")},3:{...staff[2],h:+g("h3")}};
-function add(st,d,start,end){
-if(end<=start)return false;
-if(!used[st.id].has(d)&&used[st.id].size>=st.d)return false;
-let eff=0;
-for(let t=start;t<end;t+=30){
-const need=(t>=cs&&t<ce)?coreNeed:baseNeed;
-if(cov[d][t]<need){cov[d][t]++;eff+=30}
-}
-if(eff===0)return false;
-sh[st.id].push({d,start,end,eff});
-used[st.id].add(d);st.h-=eff/60;return true;
-}
-// E1
-let e1=st2[1];
-if(e1.h>0){let end=Math.min(close,e1.we);add(e1,2,Math.max(open,e1.s),end);}
-for(const d of [0,1,3,4]){if(e1.h<=0.01)break;
-let start=Math.max(open,e1.s);
-let avail=Math.round(e1.h*60);
-let end=Math.min(ce,start+Math.max(30,Math.floor(avail/30)*30));
-add(e1,d,start,end);
-}
-for(const d of [0,1,2,3,4]){if(e1.h<=0.01)break;
-let end=Math.min(close,ce+Math.round(e1.h*60/30)*30);
-if(end>ce)add(e1,d,ce,end);
-}
-// E2
-let e2b=st2[2];
-if(e2b.h>0&&e2b.whole){
-for(const d of [0,1,3,4,2]){if(e2b.h<=0.01)break;
-let start=Math.max(open,e2b.s),end=close;
-let avail=Math.round(e2b.h*60);
-if(avail<end-start)end=start+Math.floor(avail/30)*30;
-if(end-start>=240)add(e2b,d,start,end);
-}
-if(e2b.h>0&&!used[2].has(2)){
-let start=Math.max(cs,e2b.s),end=Math.min(ce,cs+Math.round(e2b.h*60/30)*30);
-add(e2b,2,start,end);
-}
-}else if(e2b.h>0){
-for(const d of [0,1,3,4,2]){if(e2b.h<=0.01)break;
-let start=Math.max(cs,e2b.s),end=Math.min(ce,cs+Math.round(e2b.h*60/30)*30);
-if(end>start)add(e2b,d,start,end);}
-for(const d of [0,1,3,4,2]){if(e2b.h<=0.01)break;
-let start=ce,end=Math.min(close,ce+Math.round(e2b.h*60/30)*30);
-if(end>start)add(e2b,d,start,end);}
-}
-// E3: Lücken füllen, längste zuerst, mehrere Runden
-let e3b=st2[3];
-for(let round=0;round<10;round++){
-if(e3b.h<=0.01)break;
-let best=null;
+function settings(){let a={};document.querySelectorAll('.settings input[id],.settings select[id]').forEach(e=>a[e.id]=e.type==='checkbox'?e.checked:e.value);return a}
+function apply(a){for(let [k,v]of Object.entries(a)){let e=$(k);if(e&&e.closest('.settings')){if(e.type==='checkbox')e.checked=!!v;else e.value=v}}}
+try{let a=localStorage.getItem('kita-v2-settings');if(a)apply(JSON.parse(a))}catch(e){}
+function download(name,text,type){let a=document.createElement('a'),u=URL.createObjectURL(new Blob([text],{type}));a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}
+function saveSettings(){download('kita-einstellungen.json',JSON.stringify(settings(),null,2),'application/json')}
+function loadSettings(e){let f=e.files[0];if(f)f.text().then(t=>{try{apply(JSON.parse(t))}catch(e){alert('Keine gültige Einstellungsdatei.')}})}
+let last=null;
+function solve(){let b=$('run');b.disabled=true;b.textContent='Suche läuft …';setTimeout(()=>{try{compute()}catch(e){$('result').innerHTML='<h2>Eingaben prüfen</h2><div class="box bad">'+esc(e.message)+'</div>'}finally{b.disabled=false;b.textContent='Plan berechnen'}},50)}
+function compute(){
+const op=tm($('op').value),cl=tm($('cl').value),cs=tm($('cs').value),ce=tm($('ce').value),bn=num('bn'),cn=num('cn'),automatic=$('auto').checked;
+if(![op,cl,cs,ce].every(Number.isFinite)||[op,cl,cs,ce].some(x=>x%30)||!(op<cl&&op<=cs&&cs<ce&&ce<=cl)||cl-op>720)throw Error('Zeiten müssen im 30-Minuten-Raster liegen. Kernzeit innerhalb der Öffnung, Öffnung maximal 12 Stunden.');
+if(![bn,cn].every(x=>Number.isInteger(x)&&x>=1&&x<=3))throw Error('Besetzung muss zwischen 1 und 3 liegen.');
+const n=(cl-op)/30,target=[0,1,2].map(p=>num('h'+p)*2),maxdays=[0,1,2].map(p=>num('d'+p)),prefs=[0,1,2].map(p=>$('pref'+p).value==='compact'),reserve=num('reserve')*2;
+if(target.some(x=>!Number.isInteger(x)||x<0||x>120)||maxdays.some(x=>!Number.isInteger(x)||x<0||x>5)||!Number.isInteger(reserve)||reserve<0)throw Error('Stunden in 0,5-Schritten (maximal 60), Tage zwischen 0 und 5 eingeben.');
+const need=Array.from({length:n},(_,i)=>op+i*30>=cs&&op+i*30<ce?cn:bn),weeklyNeed=5*need.reduce((a,b)=>a+b,0);
+let available=Array.from({length:3},()=>[]),options=[];
 for(let d=0;d<5;d++){
-if(!used[3].has(d)&&used[3].size>=e3b.d)continue;
-let runStart=null;
-for(let i=0;i<=daySlots[d].length;i++){
-const t=i<daySlots[d].length?daySlots[d][i]:null;
-const gapHere=t!==null&&cov[d][t]<((t>=cs&&t<ce)?coreNeed:baseNeed);
-if(gapHere&&runStart===null)runStart=t;
-if(!gapHere&&runStart!==null){
-const len=i*30-(runStart-open);
-if(!best||len>best.len)best={d,start:runStart,len};
-runStart=null;
+let shifts=[];
+for(let p=0;p<3;p++){
+let s=tm($('s'+p+d).value),e=tm($('e'+p+d).value),fixed=$('fix'+p).value?tm($('fix'+p).value):null,on=$('a'+p+d).checked;
+if(!Number.isFinite(s)||!Number.isFinite(e)||s%30||e%30||s>=e||(fixed!==null&&(!Number.isFinite(fixed)||fixed%30)))throw Error('Verfügbarkeit E'+(p+1)+' '+days[d]+' prüfen.');
+available[p][d]={s,e,fixed,on};let ar=[{s:0,e:0,l:0}];
+if(on&&maxdays[p]>0)for(let a=Math.max(op,s);a<Math.min(cl,e);a+=30){if(fixed!==null&&a!==fixed)continue;for(let b=a+30;b<=Math.min(cl,e);b+=30){let l=(b-a)/30;if(!(automatic&&p===2)&&l>target[p])continue;ar.push({s:(a-op)/30,e:(b-op)/30,l})}}
+shifts.push(ar);
+}
+let opts=[];
+for(let a of shifts[0])for(let b of shifts[1]){
+let lo=n,hi=-1,impossible=false;
+for(let i=0;i<n;i++){let deficit=need[i]-(a.l&&i>=a.s&&i<a.e?1:0)-(b.l&&i>=b.s&&i<b.e?1:0);if(deficit>1){impossible=true;break}if(deficit>0){lo=Math.min(lo,i);hi=i}}
+if(impossible)continue;
+for(let c of shifts[2]){if(hi>=0&&(!c.l||c.s>lo||c.e<=hi))continue;opts.push({sh:[a,b,c],h:[a.l,b.l,c.l],dy:[+!!a.l,+!!b.l,+!!c.l]})}
+}
+if(!opts.length){$('result').innerHTML='<h2>Kein Tagesplan möglich</h2><div class="box bad">Für '+days[d]+' erfüllt keine Kombination die Besetzungs- und Verfügbarkeitsregeln. Prüfe Tagesgrenzen, Stundenbudget und maximale Tage.</div>';last=null;return}
+options.push(opts);
+}
+try{localStorage.setItem('kita-v2-settings',JSON.stringify(settings()))}catch(e){}
+function evaluate(H,D){let hard=0,soft=0;for(let p=0;p<3;p++){if(!(p===2&&automatic))hard+=Math.abs(H[p]-target[p]);hard+=Math.max(0,D[p]-maxdays[p])*24;if(prefs[p])soft+=D[p]*2}if(automatic)soft+=H[2];return {hard,soft,score:hard*1000+soft}}
+let best=null,bestEval=null;
+for(let restart=0;restart<18;restart++){
+let chosen=options.map(x=>Math.floor(Math.random()*x.length)),H=[0,0,0],D=[0,0,0];
+function adjust(o,sign){for(let p=0;p<3;p++){H[p]+=sign*o.h[p];D[p]+=sign*o.dy[p]}}
+chosen.forEach((i,d)=>adjust(options[d][i],1));let ev=evaluate(H,D);
+for(let step=0;step<18000;step++){
+let d=Math.floor(Math.random()*5),old=chosen[d],idx=Math.floor(Math.random()*options[d].length),o=options[d][old],v=options[d][idx];adjust(o,-1);adjust(v,1);let ne=evaluate(H,D),temp=10+1800*(1-step/18000)**3;
+if(ne.score<=ev.score||Math.random()<Math.exp((ev.score-ne.score)/temp)){chosen[d]=idx;ev=ne}else{adjust(v,-1);adjust(o,1)}
+if(!bestEval||ev.score<bestEval.score){best=chosen.slice();bestEval={...ev}}
 }
 }
-}
-if(!best)break;
-let avail=Math.round(e3b.h*60);
-let end=Math.min(best.start+best.len,best.start+Math.floor(avail/30)*30);
-if(!add(e3b,best.d,best.start,end))break;
-}
-// KPIs
-const totalNeed=need.reduce((a,b)=>a+b,0)/60;
-const coveredH=sh[1].concat(sh[2],sh[3]).reduce((a,s)=>a+s.eff,0)/60;
-const auto3=+g("h3")===0;
-const e3target=auto3?Math.max(0,40.5- +g("h2")):+g("h3");
-document.getElementById("kpis").innerHTML=`
-<div><b>${fmtH(totalNeed)} Std.</b><span>Erzieherinnen-Bedarf/Woche</span></div>
-<div><b>${fmtH(coveredH)} Std.</b><span>geplante Abdeckung</span></div>
-<div><b>${fmtH(st2[1].h<=0.01?0:st2[1].h)} Std.</b><span>E1 Rest</span></div>
-<div><b>${fmtH(st2[2].h<=0.01?0:st2[2].h)} Std.</b><span>E2 Rest</span></div>
-<div><b>${fmtH(Math.max(0,e3b.h))} Std.</b><span>E3 Rest${auto3?" (Soll: "+fmtH(e3target)+")":""}</span></div>`;
-let msgs=[];
-const uncovered=totalNeed-coveredH;
-if(uncovered>0.01)msgs.push(`<div class="warnbox w-bad"><b>${fmtH(uncovered)} Stunden nicht abgedeckt.</b> E3 braucht mehr Stunden, E2/E1 mehr Flexibilität oder Aushilfen an den Lücken.</div>`);
-else if(e3b.h>0.01&&auto3)msgs.push(`<div class="warnbox w-ok">Alle Pflichtzeiten abgedeckt. E3 könnte noch ${fmtH(e3b.h)} Std. als Puffer behalten.</div>`);
-else msgs.push(`<div class="warnbox w-ok">Alle Pflichtzeiten sind abgedeckt.</div>`);
-if(e2b.h>0.01)msgs.push(`<div class="warnbox w-warn">E2 konnten nur ${fmtH(+g("h2")-e2b.h)} von ${fmtH(+g("h2"))} Std. geplant werden. Prüfe max. Tage, frühester Beginn oder „ganze Tage“.</div>`);
-if(e1.h>0.01)msgs.push(`<div class="warnbox w-warn">E1 konnten nur ${fmtH(+g("h1")-e1.h)} von ${fmtH(+g("h1"))} Std. geplant werden.</div>`);
-document.getElementById("msg").innerHTML=msgs.join("");
-// Tabelle
-let rows="";
+let plan=best.map((i,d)=>options[d][i]),H=[0,0,0],D=[0,0,0],errors=[];
 for(let d=0;d<5;d++){
-const dayName=DAYS[d];
-const cell=id=>{
-const list=sh[id].filter(s=>s.d===d).map(s=>`${toStr(s.start)}–${toStr(s.end)} <small>(${fmtH(s.eff/60)} Std. wirksam)</small>`);
-return list.length?list.join("<br>"):"–";
-};
-rows+=`<tr><td><b>${dayName}</b></td><td>${cell(1)}</td><td>${cell(2)}</td><td>${cell(3)}</td></tr>`;
+let coverage=Array(n).fill(0);
+for(let p=0;p<3;p++){let s=plan[d].sh[p],a=available[p][d];H[p]+=s.l;D[p]+=+!!s.l;if(s.l){let start=op+s.s*30,end=op+s.e*30;if(!a.on||start<a.s||end>a.e||(a.fixed!==null&&start!==a.fixed))errors.push('Verfügbarkeit E'+(p+1)+' '+days[d]);for(let i=s.s;i<s.e;i++)coverage[i]++}}
+coverage.forEach((c,i)=>{if(c<need[i])errors.push('Besetzung '+days[d]+' '+clock(op+i*30))});
 }
-let gapsTxt="";
-for(let d=0;d<5;d++){
-const gl=[];
-for(const t of daySlots[d]){
-const need=(t>=cs&&t<ce)?coreNeed:baseNeed;
-if(cov[d][t]<need)gl.push(toStr(t));
+for(let p=0;p<3;p++){if(!(p===2&&automatic)&&H[p]!==target[p])errors.push('E'+(p+1)+': '+hours(H[p])+' statt '+hours(target[p])+' Wochenstunden');if(D[p]>maxdays[p])errors.push('E'+(p+1)+': '+D[p]+' statt maximal '+maxdays[p]+' Tage')}
+let rows=plan.map((x,d)=>'<tr><th>'+days[d]+'</th>'+x.sh.map(s=>'<td>'+(s.l?clock(op+s.s*30)+'–'+clock(op+s.e*30)+'<br><small>'+hours(s.l)+' Std.</small>':'frei')+'</td></tr>').join('');
+let sums=H.map((h,p)=>'<tr><td>E'+(p+1)+'</td><td>'+hours(h)+'</td><td>'+(automatic&&p===2?'automatisch':hours(target[p]))+'</td><td>'+D[p]+' / '+maxdays[p]+'</td></tr>').join('');
+let lower=Math.max(0,weeklyNeed-target[0]-target[1]);
+$('result').innerHTML='<h2>Ergebnis</h2><div class="box '+(errors.length?'bad':'ok')+'">'+(errors.length?'Kein vollständig passender Wochenplan gefunden. Der folgende Vorschlag verletzt noch Regeln. Er ist kein Nachweis, dass die Anforderungen unmöglich sind.':'Geprüft: Alle eingestellten Besetzungs-, Verfügbarkeits-, Stunden- und Tagesregeln erfüllt. Pausen und Ausfälle sind nicht berücksichtigt.')+'</div>'+(errors.length?'<ul>'+errors.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'')+'<p>Mindest-Abdeckungsbedarf: '+hours(weeklyNeed)+' Erzieherinnenstunden/Woche. Rechnerische E3-Untergrenze aus der Stundensumme: '+hours(lower)+' Std. (keine Zusage, dass diese zeitlich ausreichen).</p><div class="scroll"><table><tr><th>Tag</th><th>E1</th><th>E2</th><th>E3</th></tr>'+rows+'</table><table><tr><th>Person</th><th>Geplant (Std.)</th><th>Ziel (Std.)</th><th>Tage / Maximum</th></tr>'+sums+'</table></div>'+(automatic?'<p>E3: gefundener Bedarf '+hours(H[2])+' Std.; zuzüglich unverplanter Zusatzstunden '+hours(reserve)+' Std. = '+hours(H[2]+reserve)+' Std. Vertragsorientierung. Kein garantiertes Minimum.</p>':'<p>Zusatzstunden '+hours(reserve)+' Std. sind zusätzlich zum festen E3-Ziel zu verstehen und nicht verplant.</p>')+'<button onclick="exportCSV()">Vorschlag als CSV</button><button onclick="window.print()">Drucken / als PDF speichern</button><button onclick="solve()">Erneut suchen</button><p><small>Wenige, lange Tage sind ein weicher Wunsch. Die Suche darf davon abweichen, um harte Regeln zu erfüllen. Erneute Suchen können andere Lösungen liefern.</small></p>';
+last={plan,op,H,errors};$('result').scrollIntoView({behavior:'smooth'});
 }
-if(gl.length)gapsTxt+=`<div class="warnbox w-bad"><b>${DAYS[d]}:</b> Unterbesetzung um ${gl.map(t=>`<span class="badge b-bad">${t}</span>`).join(" ")}</div>`;
-}
-document.getElementById("plan").innerHTML=`<table><tr><th>Tag</th><th>Erzieherin 1</th><th>Erzieherin 2</th><th>Erzieherin 3</th></tr>${rows}</table>${gapsTxt}`;
-}
-calc();
-</script>
-</body>
-</html>
+function exportCSV(){if(!last)return;let r=[['Status',last.errors.length?'NICHT ALLE REGELN ERFÜLLT':'Eingestellte Regeln erfüllt – ohne Pausenprüfung'],['Tag','Person','Beginn','Ende','Stunden']];last.plan.forEach((x,d)=>x.sh.forEach((s,p)=>r.push([days[d],'E'+(p+1),s.l?clock(last.op+s.s*30):'',s.l?clock(last.op+s.e*30):'',hours(s.l)])));for(let p=0;p<3;p++)r.push(['Wochensumme','E'+(p+1),'','',hours(last.H[p])]);download('kita-plan.csv','\uFEFF'+r.map(row=>row.map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(';')).join('\r\n'),'text/csv;charset=utf-8')}
+</script></html>
