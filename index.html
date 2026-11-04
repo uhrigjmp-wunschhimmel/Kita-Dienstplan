@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kita-Dienstplan-Rechner</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--ink:#1f2937;--muted:#6b7280;--accent:#2563eb;--ok:#16a34a;--warn:#d97706;--bad:#dc2626}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+.wrap{max-width:1200px;margin:0 auto;padding:24px}
+h1{font-size:22px;margin:0 0 4px}
+p.sub{color:var(--muted);margin:0 0 20px}
+.grid{display:grid;grid-template-columns:340px 1fr;gap:20px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid #e5e7eb;border-radius:14px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+h2{font-size:15px;margin:0 0 12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+label{display:block;font-size:13px;font-weight:600;margin:10px 0 4px}
+input,select{width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:14px}
+.row{display:flex;gap:10px}
+.row>div{flex:1}
+button{margin-top:16px;width:100%;padding:11px;background:var(--accent);color:#fff;border:0;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer}
+button:hover{filter:brightness(1.05)}
+.hint{font-size:12px;color:var(--muted);margin-top:4px}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+th,td{border:1px solid #e5e7eb;padding:7px 8px;text-align:left;vertical-align:top}
+th{background:#f3f4f6;font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:#374151}
+td small{color:var(--muted)}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700}
+.b-ok{background:#dcfce7;color:#166534}.b-warn{background:#fef3c7;color:#92400e}.b-bad{background:#fee2e2;color:#991b1b}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.kpi div{background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:10px}
+.kpi b{display:block;font-size:20px}
+.kpi span{font-size:12px;color:var(--muted)}
+.warnbox{margin-top:12px;padding:10px 12px;border-radius:10px;font-size:13px}
+.w-bad{background:#fee2e2;color:#991b1b}.w-warn{background:#fef3c7;color:#92400e}.w-ok{background:#dcfce7;color:#166534}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:10px}
+.dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:middle}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Kita-Dienstplan-Rechner</h1>
+<p class="sub">Stunden und Rahmenbedingungen eingeben – das Tool verteilt die Dienste und prüft Kernzeit, Öffnungszeit und Wünsche.</p>
+<div class="grid">
+<div class="card">
+<h2>Einstellungen</h2>
+<label>Kita öffnet</label><input type="time" id="open" value="08:00">
+<label>Kita schließt</label><input type="time" id="close" value="16:00">
+<label>Kernzeit von</label><input type="time" id="coreStart" value="10:00">
+<label>Kernzeit bis</label><input type="time" id="coreEnd" value="14:30">
+<div class="row">
+<div><label>Erz. nötig (Kernzeit)</label><input type="number" id="coreNeed" value="2" min="1" max="4"></div>
+<div><label>Erz. nötig (sonst)</label><input type="number" id="baseNeed" value="1" min="1" max="4"></div>
+</div>
+<hr style="border:none;border-top:1px solid #e5e7eb;margin:14px 0">
+<h2>Erzieherin 1</h2>
+<label>Wochenstunden</label><input type="number" id="h1" value="22" min="0" step="0.5">
+<label>Frühester Beginn</label><input type="time" id="s1" value="08:00">
+<label>Spätester Beginn</label><input type="time" id="ls1" value="08:00">
+<label>Mittwoch endet spätestens</label><input type="time" id="we1" value="12:30">
+<label>Max. Tage pro Woche</label><input type="number" id="d1" value="5" min="1" max="5">
+<h2>Erzieherin 2</h2>
+<label>Wochenstunden</label><input type="number" id="h2" value="24" min="0" step="0.5">
+<label>Frühester Beginn</label><input type="time" id="s2" value="08:30">
+<label>Möchte ganze Tage</label>
+<select id="whole2"><option value="1">Ja – möglichst ganze Tage</option><option value="0">Nein – Blöcke erlaubt</option></select>
+<label>Max. Tage pro Woche</label><input type="number" id="d2" value="4" min="1" max="5">
+<h2>Erzieherin 3</h2>
+<label>Wochenstunden (0 = automatisch)</label><input type="number" id="h3" value="0" min="0" step="0.5">
+<label>Frühester Beginn</label><input type="time" id="s3" value="08:00">
+<label>Max. Tage pro Woche</label><input type="number" id="d3" value="5" min="1" max="5">
+<label>Pufferstunden zusätzlich</label><input type="number" id="buf" value="0" min="0" step="0.5">
+<div class="hint">Puffer = zusätzliche E3-Stunden für Krankheit/Vertretung, die nicht als Besetzung geplant werden.</div>
+<button onclick="calc()">Dienstplan berechnen</button>
+</div>
+<div class="card">
+<h2>Ergebnis</h2>
+<div id="kpis" class="kpi"></div>
+<div id="msg"></div>
+<div id="plan"></div>
+<div class="legend">
+<span><span class="dot" style="background:#bfdbfe"></span>E1</span>
+<span><span class="dot" style="background:#fde68a"></span>E2</span>
+<span><span class="dot" style="background:#bbf7d0"></span>E3</span>
+<span><span class="dot" style="background:#e5e7eb"></span>Lücke</span>
+</div>
+</div>
+</div>
+</div>
+<script>
+const DAYS=["Montag","Dienstag","Mittwoch","Donnerstag","Freitag"];
+const toMin=t=>{const[a,b]=t.split(":").map(Number);return a*60+b};
+const toStr=m=>String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");
+const fmtH=m=>(m/60).toFixed(1).replace(".",",");
+function g(id){return document.getElementById(id).value}
+function calc(){
+const open=toMin(g("open")),close=toMin(g("close")),cs=toMin(g("coreStart")),ce=toMin(g("coreEnd"));
+const baseNeed=+g("baseNeed"),coreNeed=+g("coreNeed");
+const staff=[
+{id:1,name:"E1",h:+g("h1"),s:toMin(g("s1")),ls:toMin(g("ls1")),we:toMin(g("we1")),d:+g("d1")},
+{id:2,name:"E2",h:+g("h2"),s:toMin(g("s2")),ls:toMin(g("s2")),we:close,d:+g("d2"),whole:g("whole2")==="1"},
+{id:3,name:"E3",h:+g("h3"),s:toMin(g("s3")),ls:toMin(g("s3")),we:close,d:+g("d3")}
+];
+const buf=+g("buf");
+// Bedarf je 30-min-Slot
+const slots=[];for(let t=open;t<close;t+=30)slots.push(t);
+const need=slots.map(t=>(t>=cs&&t<ce)?coreNeed:baseNeed);
+const covered=slots.map(()=>0);
+const shifts={1:[],2:[],3:[]};
+const daysUsed={1:new Set(),2:new Set(),3:new Set()};
+// Priorität: E1 Vormittag (früh), E2 ganze Tage, E3 Rest
+function addShift(st,day,start,end){
+if(end<=start)return false;
+if(daysUsed[st.id].has(day)&&false)return false;
+if(!daysUsed[st.id].has(day)&&daysUsed[st.id].size>=st.d)return false;
+let used=0;
+for(let t=start;t<end;t+=30){const i=slots.indexOf(t);if(i<0)continue;if(covered[i]<need[i]){covered[i]++;used+=30}}
+if(used===0)return false;
+shifts[st.id].push({day,start,end,eff:used});
+daysUsed[st.id].add(day);
+st.h-=used/60;
+return true;
+}
+// E1: Morgenblöcke, Mittwoch respektieren
+for(const st of [staff[0]]){
+// Mittwoch zuerst
+if(st.h>0){let end=Math.min(close,st.we);let start=Math.max(open,st.s);
+// E1 Mittwoch: von früh bis Wunschende
+if(addShift(st,2,start,end)){}
+}
+for(const day of [0,1,3,4]){if(st.h<=0)break;
+let start=Math.max(open,st.s),end=Math.min(close,Math.max(cs,start+30));
+// E1 Vormittag: bis Kernzeitende oder solange Stunden da
+let target=Math.min(close,ce);
+let avail=Math.round(st.h*60);
+end=Math.min(target,start+Math.max(30,Math.floor(avail/30)*30));
+addShift(st,day,start,end);
+}
+// E1 Reststunden nachmittags falls übrig
+for(const day of [0,1,2,3,4]){if(st.h<=0.01)break;
+let start=ce,end=Math.min(close,ce+Math.round(st.h*60/30)*30);
+if(end>start)addShift(st,day,start,end);
+}
+}
+// E2: ganze Tage wenn gewünscht
+const e2=staff[1];
+if(e2.h>0&&e2.whole){
+for(const day of [0,1,3,4,2]){if(e2.h<=0)break;
+let start=Math.max(open,e2.s),end=close;
+let avail=Math.round(e2.h*60);
+if(avail<end-start){ // letzter Tag kürzer
+end=start+Math.floor(avail/30)*30;
+}
+if(end-start>=240)addShift(e2,day,start,end);
+}
+// Mittwoch-Block falls noch Stunden und Mittwoch nicht ganz
+if(e2.h>0&&!daysUsed[2].has(2)){
+let start=Math.max(cs,e2.s),end=Math.min(ce,cs+Math.round(e2.h*60/30)*30);
+addShift(e2,2,start,end);
+}
+} else if(e2.h>0){
+// Blöcke: Kernzeit + Nachmittag
+for(const day of [0,1,3,4,2]){if(e2.h<=0)break;
+let start=Math.max(cs,e2.s),end=Math.min(ce,cs+Math.round(e2.h*60/30)*30);
+if(end>start)addShift(e2,day,start,end);
+}
+for(const day of [0,1,3,4,2]){if(e2.h<=0)break;
+let start=ce,end=Math.min(close,ce+Math.round(e2.h*60/30)*30);
+if(end>start)addShift(e2,day,start,end);
+}
+}
+// E3: Rest auffüllen, längste Lücken zuerst
+const e3=staff[2];
+let iter=0;
+while(iter++<200){
+// finde Lücken
+let gaps=[];
+for(const day of [0,1,2,3,4]){
+let run=null;
+for(let i=0;i<slots.length;i++){
+const t=slots[i];
+const isDay=day===Math.floor((t-open)/(24*60)); // slots sind global; stattdessen pro Tag neu
+}
+}
+break;
+}
+// Einfacher: pro Tag Lücken füllen
+for(const day of [0,1,2,3,4]){
+if(e3.h<=0.01)break;
+if(daysUsed[3].size>=e3.d&&!daysUsed[3].has(day))continue;
+let start=null;
+for(let i=0;i<slots.length;i++){
+const t=slots[i];
+const idx=i; // slots global, aber wir behandeln jeden Slot einmal; Tageszuordnung über Wochentag nicht nötig da 5 Tage × slots? 
+}
+}
+// Da slots global über die Woche gehen müssten, korrigieren: baue slots pro Tag
+// Neu: korrekte Slotstruktur
+const daySlots=DAYS.map(()=>[]);
+for(let d=0;d<5;d++)for(let t=open;t<close;t+=30)daySlots[d].push(t);
+const cov=DAYS.map(()=>({}));
+for(let d=0;d<5;d++)for(const t of daySlots[d])cov[d][t]=0;
+const sh={1:[],2:[],3:[]};const used={1:new Set(),2:new Set(),3:new Set()};
+const st2={1:{...staff[0],h:+g("h1")},2:{...staff[1],h:+g("h2")},3:{...staff[2],h:+g("h3")}};
+function add(st,d,start,end){
+if(end<=start)return false;
+if(!used[st.id].has(d)&&used[st.id].size>=st.d)return false;
+let eff=0;
+for(let t=start;t<end;t+=30){
+const need=(t>=cs&&t<ce)?coreNeed:baseNeed;
+if(cov[d][t]<need){cov[d][t]++;eff+=30}
+}
+if(eff===0)return false;
+sh[st.id].push({d,start,end,eff});
+used[st.id].add(d);st.h-=eff/60;return true;
+}
+// E1
+let e1=st2[1];
+if(e1.h>0){let end=Math.min(close,e1.we);add(e1,2,Math.max(open,e1.s),end);}
+for(const d of [0,1,3,4]){if(e1.h<=0.01)break;
+let start=Math.max(open,e1.s);
+let avail=Math.round(e1.h*60);
+let end=Math.min(ce,start+Math.max(30,Math.floor(avail/30)*30));
+add(e1,d,start,end);
+}
+for(const d of [0,1,2,3,4]){if(e1.h<=0.01)break;
+let end=Math.min(close,ce+Math.round(e1.h*60/30)*30);
+if(end>ce)add(e1,d,ce,end);
+}
+// E2
+let e2b=st2[2];
+if(e2b.h>0&&e2b.whole){
+for(const d of [0,1,3,4,2]){if(e2b.h<=0.01)break;
+let start=Math.max(open,e2b.s),end=close;
+let avail=Math.round(e2b.h*60);
+if(avail<end-start)end=start+Math.floor(avail/30)*30;
+if(end-start>=240)add(e2b,d,start,end);
+}
+if(e2b.h>0&&!used[2].has(2)){
+let start=Math.max(cs,e2b.s),end=Math.min(ce,cs+Math.round(e2b.h*60/30)*30);
+add(e2b,2,start,end);
+}
+}else if(e2b.h>0){
+for(const d of [0,1,3,4,2]){if(e2b.h<=0.01)break;
+let start=Math.max(cs,e2b.s),end=Math.min(ce,cs+Math.round(e2b.h*60/30)*30);
+if(end>start)add(e2b,d,start,end);}
+for(const d of [0,1,3,4,2]){if(e2b.h<=0.01)break;
+let start=ce,end=Math.min(close,ce+Math.round(e2b.h*60/30)*30);
+if(end>start)add(e2b,d,start,end);}
+}
+// E3: Lücken füllen, längste zuerst, mehrere Runden
+let e3b=st2[3];
+for(let round=0;round<10;round++){
+if(e3b.h<=0.01)break;
+let best=null;
+for(let d=0;d<5;d++){
+if(!used[3].has(d)&&used[3].size>=e3b.d)continue;
+let runStart=null;
+for(let i=0;i<=daySlots[d].length;i++){
+const t=i<daySlots[d].length?daySlots[d][i]:null;
+const gapHere=t!==null&&cov[d][t]<((t>=cs&&t<ce)?coreNeed:baseNeed);
+if(gapHere&&runStart===null)runStart=t;
+if(!gapHere&&runStart!==null){
+const len=i*30-(runStart-open);
+if(!best||len>best.len)best={d,start:runStart,len};
+runStart=null;
+}
+}
+}
+if(!best)break;
+let avail=Math.round(e3b.h*60);
+let end=Math.min(best.start+best.len,best.start+Math.floor(avail/30)*30);
+if(!add(e3b,best.d,best.start,end))break;
+}
+// KPIs
+const totalNeed=need.reduce((a,b)=>a+b,0)/60;
+const coveredH=sh[1].concat(sh[2],sh[3]).reduce((a,s)=>a+s.eff,0)/60;
+const auto3=+g("h3")===0;
+const e3target=auto3?Math.max(0,40.5- +g("h2")):+g("h3");
+document.getElementById("kpis").innerHTML=`
+<div><b>${fmtH(totalNeed)} Std.</b><span>Erzieherinnen-Bedarf/Woche</span></div>
+<div><b>${fmtH(coveredH)} Std.</b><span>geplante Abdeckung</span></div>
+<div><b>${fmtH(st2[1].h<=0.01?0:st2[1].h)} Std.</b><span>E1 Rest</span></div>
+<div><b>${fmtH(st2[2].h<=0.01?0:st2[2].h)} Std.</b><span>E2 Rest</span></div>
+<div><b>${fmtH(Math.max(0,e3b.h))} Std.</b><span>E3 Rest${auto3?" (Soll: "+fmtH(e3target)+")":""}</span></div>`;
+let msgs=[];
+const uncovered=totalNeed-coveredH;
+if(uncovered>0.01)msgs.push(`<div class="warnbox w-bad"><b>${fmtH(uncovered)} Stunden nicht abgedeckt.</b> E3 braucht mehr Stunden, E2/E1 mehr Flexibilität oder Aushilfen an den Lücken.</div>`);
+else if(e3b.h>0.01&&auto3)msgs.push(`<div class="warnbox w-ok">Alle Pflichtzeiten abgedeckt. E3 könnte noch ${fmtH(e3b.h)} Std. als Puffer behalten.</div>`);
+else msgs.push(`<div class="warnbox w-ok">Alle Pflichtzeiten sind abgedeckt.</div>`);
+if(e2b.h>0.01)msgs.push(`<div class="warnbox w-warn">E2 konnten nur ${fmtH(+g("h2")-e2b.h)} von ${fmtH(+g("h2"))} Std. geplant werden. Prüfe max. Tage, frühester Beginn oder „ganze Tage“.</div>`);
+if(e1.h>0.01)msgs.push(`<div class="warnbox w-warn">E1 konnten nur ${fmtH(+g("h1")-e1.h)} von ${fmtH(+g("h1"))} Std. geplant werden.</div>`);
+document.getElementById("msg").innerHTML=msgs.join("");
+// Tabelle
+let rows="";
+for(let d=0;d<5;d++){
+const dayName=DAYS[d];
+const cell=id=>{
+const list=sh[id].filter(s=>s.d===d).map(s=>`${toStr(s.start)}–${toStr(s.end)} <small>(${fmtH(s.eff/60)} Std. wirksam)</small>`);
+return list.length?list.join("<br>"):"–";
+};
+rows+=`<tr><td><b>${dayName}</b></td><td>${cell(1)}</td><td>${cell(2)}</td><td>${cell(3)}</td></tr>`;
+}
+let gapsTxt="";
+for(let d=0;d<5;d++){
+const gl=[];
+for(const t of daySlots[d]){
+const need=(t>=cs&&t<ce)?coreNeed:baseNeed;
+if(cov[d][t]<need)gl.push(toStr(t));
+}
+if(gl.length)gapsTxt+=`<div class="warnbox w-bad"><b>${DAYS[d]}:</b> Unterbesetzung um ${gl.map(t=>`<span class="badge b-bad">${t}</span>`).join(" ")}</div>`;
+}
+document.getElementById("plan").innerHTML=`<table><tr><th>Tag</th><th>Erzieherin 1</th><th>Erzieherin 2</th><th>Erzieherin 3</th></tr>${rows}</table>${gapsTxt}`;
+}
+calc();
+</script>
+</body>
+</html>
