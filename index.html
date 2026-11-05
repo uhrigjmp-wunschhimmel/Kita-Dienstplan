@@ -1,11 +1,11 @@
-<!doctype html><html lang="de"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Kita-Planer – Version 3</title>
+<!doctype html><html lang="de"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Kita-Planer – Version 4</title>
 <style>body{font:15px system-ui;color:#183044;background:#eef3f7;margin:0}main{max-width:1150px;margin:auto;padding:24px}section{background:white;padding:20px;margin:16px 0;border-radius:12px}h1{margin-bottom:5px}h2{font-size:20px}input,select,button{font:inherit;padding:7px;border:1px solid #b3c4d0;border-radius:5px}input[type=number]{width:75px}input[type=time]{width:100px}button{background:#176ba0;color:white;cursor:pointer;margin:8px 5px 8px 0}table{border-collapse:collapse;width:100%;margin:12px 0}td,th{border:1px solid #d6e0e7;padding:8px;text-align:left} .scroll{overflow:auto}.row{display:flex;gap:18px;flex-wrap:wrap}.box{padding:12px;background:#eaf2fa;margin:10px 0}.bad{background:#ffe6e4}.ok{background:#def3e5}small{color:#526779}label{display:inline-block;margin:6px}summary{cursor:pointer}#result{scroll-margin-top:15px}@media print{.settings,button{display:none}body{background:white}section{padding:0}}</style>
-<main><h1>Kita-Dienstplaner</h1><small>Version 3 · lokale Berechnung · 30-Minuten-Raster · keine externen Bibliotheken</small>
+<main><h1>Kita-Dienstplaner</h1><small>Version 4 · exakte lokale Berechnung · 30-Minuten-Raster · keine externen Bibliotheken</small>
 <section class="settings"><h2>1. Besetzungsregeln</h2><div class="row"><label>Öffnung <input id="op" type="time" step="1800" value="08:00"></label><label>Schließung <input id="cl" type="time" step="1800" value="16:00"></label><label>Kernzeit ab <input id="cs" type="time" step="1800" value="10:00"></label><label>Kernzeit bis <input id="ce" type="time" step="1800" value="14:30"></label></div><label>Erzieherinnen außerhalb Kernzeit <input id="bn" type="number" min="1" max="3" value="1"></label><label>Erzieherinnen in Kernzeit <input id="cn" type="number" min="1" max="3" value="2"></label><p>Bufdi und Aushilfen zählen nicht zur geforderten Erzieherinnenbesetzung.</p>
 <h2>2. Stunden und Wünsche</h2><div class="scroll"><table><thead><tr><th>Person</th><th>Wochenstunden</th><th>Max. Tage</th><th>Wunsch</th></tr></thead><tbody id="staff"></tbody></table></div><p>Alle Wochenstunden werden fest vorgegeben. Zusätzliche Anwesenheit ist erlaubt.</p><label>Gemeinsamer Tag bis 16:00 Uhr <select id="team"><option value="0">Montag</option><option value="1">Dienstag</option><option value="2">Mittwoch</option><option value="3" selected>Donnerstag</option><option value="4">Freitag</option></select></label><p>Pro Arbeitstag mindestens 4 Stunden, ein zusammenhängender Dienst. Keine Planung der Teamsitzung selbst.</p><h2>3. Verfügbarkeiten pro Tag</h2><p>Ein leerer „Arbeitet“-Haken sperrt den Tag. Beginn/Ende sind harte Grenzen. Ein optionaler fester Dienstbeginn gilt an jedem tatsächlich gearbeiteten Tag.</p><div id="avail"></div>
 <button id="run" onclick="solve()">Plan berechnen</button><button id="stop" onclick="stopSearch()" disabled>Abbrechen</button><button onclick="saveSettings()">Einstellungen exportieren</button><label>Einstellungen laden <input type="file" accept="application/json" onchange="loadSettings(this)"></label><p><small>Die Einstellungen werden zusätzlich in diesem Browser gespeichert. Andere Nutzer sehen sie nicht automatisch. Für eine gemeinsame Variante die Einstellungsdatei weitergeben.</small></p></section>
 <section id="result"><h2>Ergebnis</h2><p>Noch kein Plan berechnet.</p></section>
-<section><h2>Grenzen dieses Planers</h2><ul><li>Alle Zeiten und Stunden müssen im 30-Minuten-Raster liegen. Jeder Dienst dauert mindestens 4 Stunden.</li><li>Pro Person und Tag wird höchstens ein zusammenhängender Dienst geplant. Keine geteilten Dienste.</li><li>Geplant wird Anwesenheit in der Betreuung. Pausen, Vorbereitungszeit, Teamzeit, Urlaub und Krankheit sind nicht enthalten. Dienste sind keine automatisch geprüften arbeitsrechtlichen Schichten.</li><li>Die Suchroutine prüft viele Kombinationen, ist aber heuristisch. „Kein passender Plan gefunden“ beweist nicht, dass kein Plan existiert.</li><li>Die Statusprüfung kontrolliert Besetzung, Verfügbarkeiten, Tageslimits und Wochenstunden separat. Nur wenn alles erfüllt ist, erscheint ein grüner Status.</li><li>Ein gültiger Plan bietet ohne weitere Kräfte keinen automatischen Schutz vor Ausfällen. Keine rechtliche Prüfung des landesspezifischen Personalschlüssels.</li></ul></section></main>
+<section><h2>Grenzen dieses Planers</h2><ul><li>Alle Zeiten und Stunden müssen im 30-Minuten-Raster liegen. Jeder Dienst dauert mindestens 4 Stunden.</li><li>Pro Person und Tag wird höchstens ein zusammenhängender Dienst geplant. Keine geteilten Dienste.</li><li>Geplant wird Anwesenheit in der Betreuung. Pausen, Vorbereitungszeit, Teamzeit, Urlaub und Krankheit sind nicht enthalten. Dienste sind keine automatisch geprüften arbeitsrechtlichen Schichten.</li><li>Die Berechnung prüft alle Kombinationen exakt. Findet sie keinen Plan, gibt es mit diesen Einstellungen keinen. Sie benennt dann die Regeln, an denen es scheitert.</li><li>Die Statusprüfung kontrolliert Besetzung, Verfügbarkeiten, Tageslimits und Wochenstunden separat. Nur wenn alles erfüllt ist, erscheint ein grüner Status.</li><li>Ein gültiger Plan bietet ohne weitere Kräfte keinen automatischen Schutz vor Ausfällen. Keine rechtliche Prüfung des landesspezifischen Personalschlüssels.</li></ul></section></main>
 <script>
 'use strict';
 const days=['Montag','Dienstag','Mittwoch','Donnerstag','Freitag'];
@@ -22,59 +22,99 @@ function download(name,text,type){let a=document.createElement('a'),u=URL.create
 function saveSettings(){download('kita-einstellungen.json',JSON.stringify(settings(),null,2),'application/json')}
 function loadSettings(e){let f=e.files[0];if(f)f.text().then(t=>{try{apply(JSON.parse(t));if(activeWorker)stopSearch();last=null;$('result').innerHTML='<h2>Einstellungen geladen</h2><p>Bitte neu berechnen.</p>'}catch(e){alert('Keine gültige Einstellungsdatei.')}})}
 let last=null;
-function solve(){let b=$('run');b.disabled=true;b.textContent='Suche läuft …';setTimeout(()=>{try{compute()}catch(e){$('result').innerHTML='<h2>Eingaben prüfen</h2><div class="box bad">'+esc(e.message)+'</div>'}finally{b.disabled=false;b.textContent='Plan berechnen'}},50)}
 function compute(){
-const op=tm($('op').value),cl=tm($('cl').value),cs=tm($('cs').value),ce=tm($('ce').value),bn=num('bn'),cn=num('cn'),automatic=false,team=num('team');
+const op=tm($('op').value),cl=tm($('cl').value),cs=tm($('cs').value),ce=tm($('ce').value),bn=num('bn'),cn=num('cn'),team=num('team');
 if(![op,cl,cs,ce].every(Number.isFinite)||[op,cl,cs,ce].some(x=>x%30)||!(op<cl&&op<=cs&&cs<ce&&ce<=cl)||cl-op>720)throw Error('Zeiten müssen im 30-Minuten-Raster liegen. Kernzeit innerhalb der Öffnung, Öffnung maximal 12 Stunden.');
 if(![bn,cn].every(x=>Number.isInteger(x)&&x>=1&&x<=3))throw Error('Besetzung muss zwischen 1 und 3 liegen.');
-const n=(cl-op)/30,target=[0,1,2].map(p=>num('h'+p)*2),maxdays=[0,1,2].map(p=>num('d'+p)),prefs=[0,1,2].map(p=>$('pref'+p).value==='compact'),reserve=0;
-if(target.some(x=>!Number.isInteger(x)||x<0||x>120)||maxdays.some(x=>!Number.isInteger(x)||x<0||x>5)||!Number.isInteger(reserve)||reserve<0)throw Error('Stunden in 0,5-Schritten (maximal 60), Tage zwischen 0 und 5 eingeben.');
-const need=Array.from({length:n},(_,i)=>op+i*30>=cs&&op+i*30<ce?cn:bn),weeklyNeed=5*need.reduce((a,b)=>a+b,0);
-let available=Array.from({length:3},()=>[]),options=[];
+if(cl<960)throw Error('Der gemeinsame Tag endet um 16:00 Uhr. Die Schließzeit darf nicht vor 16:00 liegen.');
+const n=(cl-op)/30,target=[0,1,2].map(p=>num('h'+p)*2),maxdays=[0,1,2].map(p=>num('d'+p)),prefs=[0,1,2].map(p=>$('pref'+p).value==='compact');
+if(target.some(x=>!Number.isInteger(x)||x<0||x>120)||maxdays.some(x=>!Number.isInteger(x)||x<0||x>5))throw Error('Stunden in 0,5-Schritten (maximal 60), Tage zwischen 0 und 5 eingeben.');
+const need=Array.from({length:n},(_,i)=>op+i*30>=cs&&op+i*30<ce?cn:bn),dayNeed=need.reduce((a,b)=>a+b,0),weeklyNeed=5*dayNeed;
+const sum=target[0]+target[1]+target[2],limits=[];
+const H_MAX=120;
+let available=Array.from({length:3},()=>[]),shiftsAll=[];
+// 1. Mögliche Dienste je Person und Tag (Stundengrenze erst in der Wochenrechnung)
 for(let d=0;d<5;d++){
 let shifts=[];
 for(let p=0;p<3;p++){
 let s=tm($('s'+p+d).value),e=tm($('e'+p+d).value),fixed=$('fix'+p).value?tm($('fix'+p).value):null,on=$('a'+p+d).checked;
 if(!Number.isFinite(s)||!Number.isFinite(e)||s%30||e%30||s>=e||(fixed!==null&&(!Number.isFinite(fixed)||fixed%30)))throw Error('Verfügbarkeit E'+(p+1)+' '+days[d]+' prüfen.');
 available[p][d]={s,e,fixed,on};let ar=d===team?[]:[{s:0,e:0,l:0}];
-if(on&&maxdays[p]>0)for(let a=Math.max(op,s);a<Math.min(cl,e);a+=30){if(fixed!==null&&a!==fixed)continue;for(let b=a+30;b<=Math.min(cl,e);b+=30){let l=(b-a)/30;if(l<8)continue;if(d===team&&b!==960)continue;if(!(automatic&&p===2)&&l>target[p])continue;ar.push({s:(a-op)/30,e:(b-op)/30,l})}}
+if(on)for(let a=Math.max(op,s);a<Math.min(cl,e);a+=30){if(fixed!==null&&a!==fixed)continue;for(let b=a+30;b<=Math.min(cl,e);b+=30){let l=(b-a)/30;if(l<8)continue;if(d===team&&b!==960)continue;ar.push({s:(a-op)/30,e:(b-op)/30,l})}}
+if(d===team&&!ar.length)limits.push('E'+(p+1)+' kann am '+days[d]+' (gemeinsamer Tag) keinen Dienst bis 16:00 Uhr von mindestens 4 Stunden übernehmen. Verfügbarkeit, festen Beginn oder Arbeitstag prüfen.');
 shifts.push(ar);
 }
-let opts=[];
+shiftsAll.push(shifts);
+}
+if(limits.length)return report(limits,null);
+// 2. Gültige Tageskombinationen, nach Stunden/Tagen zusammengefasst
+let options=[];
+for(let d=0;d<5;d++){
+let shifts=shiftsAll[d],sig=new Map();
 for(let a of shifts[0])for(let b of shifts[1]){
 let lo=n,hi=-1,impossible=false;
 for(let i=0;i<n;i++){let deficit=need[i]-(a.l&&i>=a.s&&i<a.e?1:0)-(b.l&&i>=b.s&&i<b.e?1:0);if(deficit>1){impossible=true;break}if(deficit>0){lo=Math.min(lo,i);hi=i}}
 if(impossible)continue;
-for(let c of shifts[2]){if(hi>=0&&(!c.l||c.s>lo||c.e<=hi))continue;opts.push({sh:[a,b,c],h:[a.l,b.l,c.l],dy:[+!!a.l,+!!b.l,+!!c.l]})}
+for(let c of shifts[2]){if(hi>=0&&(!c.l||c.s>lo||c.e<=hi))continue;let k=a.l+','+b.l+','+c.l;if(!sig.has(k))sig.set(k,{sh:[a,b,c],h:[a.l,b.l,c.l],dy:[+!!a.l,+!!b.l,+!!c.l]})}
 }
-if(!opts.length){$('result').innerHTML='<h2>Kein Tagesplan möglich</h2><div class="box bad">Für '+days[d]+' erfüllt keine Kombination die Besetzungs- und Verfügbarkeitsregeln. Prüfe Tagesgrenzen, Stundenbudget und maximale Tage.</div>';last=null;return}
-options.push(opts);
+if(!sig.size){limits.push(days[d]+': Mit den Verfügbarkeiten ist die Mindestbesetzung an diesem Tag nicht erreichbar, auch nicht mit allen drei Personen. Tagesgrenzen prüfen.');continue}
+options.push([...sig.values()]);
 }
-try{localStorage.setItem('kita-v3-settings',JSON.stringify(settings()))}catch(e){}
-function evaluate(H,D){let hard=0,soft=0;for(let p=0;p<3;p++){if(!(p===2&&automatic))hard+=Math.abs(H[p]-target[p]);hard+=Math.max(0,D[p]-maxdays[p])*24;if(prefs[p])soft+=D[p]*2}if(automatic)soft+=H[2];return {hard,soft,score:hard*1000+soft}}
-let best=null,bestEval=null;
-for(let restart=0;restart<18;restart++){
-let chosen=options.map(x=>Math.floor(Math.random()*x.length)),H=[0,0,0],D=[0,0,0];
-function adjust(o,sign){for(let p=0;p<3;p++){H[p]+=sign*o.h[p];D[p]+=sign*o.dy[p]}}
-chosen.forEach((i,d)=>adjust(options[d][i],1));let ev=evaluate(H,D);
-for(let step=0;step<18000;step++){
-let d=Math.floor(Math.random()*5),old=chosen[d],idx=Math.floor(Math.random()*options[d].length),o=options[d][old],v=options[d][idx];adjust(o,-1);adjust(v,1);let ne=evaluate(H,D),temp=10+1800*(1-step/18000)**3;
-if(ne.score<=ev.score||Math.random()<Math.exp((ev.score-ne.score)/temp)){chosen[d]=idx;ev=ne}else{adjust(v,-1);adjust(o,1)}
-if(!bestEval||ev.score<bestEval.score){best=chosen.slice();bestEval={...ev}}
-}
-}
-let plan=best.map((i,d)=>options[d][i]),H=[0,0,0],D=[0,0,0],errors=[];
+if(limits.length)return report(limits,null);
+// 3. Exakte Wochenrechnung
+function search(tg,md){
+// tg[p]===null: Stunden frei (für Diagnose). Liefert erreichbare Endzustände mit Rückverweisen.
+const cap=tg.map(t=>t===null?H_MAX:t);
+let layers=[new Map([['0,0,0,0,0,0',null]])];
 for(let d=0;d<5;d++){
-let coverage=Array(n).fill(0);
-for(let p=0;p<3;p++){let s=plan[d].sh[p],a=available[p][d];H[p]+=s.l;D[p]+=+!!s.l;if(d===team&&(!s.l||op+s.e*30!==960))errors.push('Gemeinsamer Tag E'+(p+1));if(s.l&&s.l<8)errors.push('Mindestdienst E'+(p+1));if(s.l){let start=op+s.s*30,end=op+s.e*30;if(!a.on||start<a.s||end>a.e||(a.fixed!==null&&start!==a.fixed))errors.push('Verfügbarkeit E'+(p+1)+' '+days[d]);for(let i=s.s;i<s.e;i++)coverage[i]++}}
-coverage.forEach((c,i)=>{if(c<need[i])errors.push('Besetzung '+days[d]+' '+clock(op+i*30))});
+let next=new Map();
+for(let key of layers[d].keys()){
+let v=key.split(',').map(Number);
+for(let oi=0;oi<options[d].length;oi++){let o=options[d][oi],w=[v[0]+o.h[0],v[1]+o.h[1],v[2]+o.h[2],v[3]+o.dy[0],v[4]+o.dy[1],v[5]+o.dy[2]];
+if(w[0]>cap[0]||w[1]>cap[1]||w[2]>cap[2]||w[3]>md[0]||w[4]>md[1]||w[5]>md[2])continue;
+let k=w.join(',');if(!next.has(k))next.set(k,[key,oi])}
 }
-for(let p=0;p<3;p++){if(!(p===2&&automatic)&&H[p]!==target[p])errors.push('E'+(p+1)+': '+hours(H[p])+' statt '+hours(target[p])+' Wochenstunden');if(D[p]>maxdays[p])errors.push('E'+(p+1)+': '+D[p]+' statt maximal '+maxdays[p]+' Tage')}
+layers.push(next);
+}
+return layers;
+}
+function finals(layers,tg){return [...layers[5].keys()].map(k=>k.split(',').map(Number)).filter(v=>[0,1,2].every(p=>tg[p]===null||v[p]===tg[p]))}
+let layers=search(target,maxdays),fin=finals(layers,target);
+if(fin.length){
+// weicher Wunsch: möglichst wenige Tage für Personen mit "wenige, lange Tage"
+fin.sort((x,y)=>[0,1,2].reduce((s,p)=>s+(prefs[p]?x[3+p]-y[3+p]:0),0));
+let key=fin[0].join(','),plan=[];
+for(let d=5;d>0;d--){let [prev,oi]=layers[d].get(key);plan[d-1]=options[d-1][oi];key=prev}
+return report([],plan);
+}
+// 4. Diagnose: welche Regel verhindert den Plan?
+if(sum<weeklyNeed)limits.push('Die Wochenstunden reichen nicht: '+hours(sum)+' Std. vertraglich, aber mindestens '+hours(weeklyNeed)+' Std. Besetzung nötig.');
+let minTeam=Math.min(...options[team].map(o=>o.h[0]+o.h[1]+o.h[2]))-dayNeed;
+if(sum>=weeklyNeed){let buf=sum-weeklyNeed;limits.push('Puffer: '+hours(buf)+' Std. pro Woche dürfen mehr Personen da sein als nötig. Der gemeinsame Tag ('+days[team]+') verbraucht davon mindestens '+hours(minTeam)+' Std.'+(minTeam>=buf?' An den anderen Tagen bleibt damit keine Doppelbesetzung außerhalb des Bedarfs übrig.':''))}
+for(let p=0;p<3;p++){
+let tg=target.slice();tg[p]=null;
+let reach=[...new Set(finals(search(tg,maxdays),tg).map(v=>v[p]))].sort((a,b)=>a-b);
+if(!reach.length){limits.push('E'+(p+1)+': Selbst mit beliebigen Stunden für E'+(p+1)+' geht es nicht auf, solange die anderen ihre Stunden exakt erfüllen.');continue}
+let lower=reach.filter(x=>x<target[p]),upper=reach.filter(x=>x>target[p]);
+let txt='E'+(p+1)+': Wenn alle anderen ihre Stunden exakt erfüllen, sind für E'+(p+1)+' ';
+if(!lower.length)txt+='mindestens '+hours(upper[0])+' Std. nötig';else if(!upper.length)txt+='höchstens '+hours(lower[lower.length-1])+' Std. möglich';else txt+='nur '+hours(lower[lower.length-1])+' oder '+hours(upper[0])+' Std. möglich';
+limits.push(txt+' (eingestellt: '+hours(target[p])+' Std.).');
+}
+for(let p=0;p<3;p++)if(maxdays[p]<5){let md=maxdays.slice();md[p]++;if(finals(search(target,md),target).length)limits.push('Mit '+md[p]+' statt '+maxdays[p]+' Tagen für E'+(p+1)+' gäbe es einen gültigen Plan.')}
+for(let p=0;p<3;p++){let s=Math.min(...[0,1,2,3,4].map(d=>available[p][d].s));if(s>op&&available[p].every(a=>a.fixed===null))limits.push('Hinweis: E'+(p+1)+' kann frühestens um '+clock(s)+' Uhr beginnen und den Frühdienst ab '+clock(op)+' nie übernehmen. Wo E'+(p+1)+' den Frühdienst ergänzt, entsteht Doppelbesetzung.')}
+return report(limits,null);
+
+function report(limits,plan){
+if(!plan){
+$('result').innerHTML='<h2>Kein gültiger Plan möglich</h2><div class="box bad">Mit diesen Einstellungen gibt es keinen Wochenplan, der alle Regeln erfüllt. Das ist geprüft, nicht geschätzt.</div><h3>Woran es liegt</h3><ul>'+limits.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul><p><small>Mindest-Abdeckungsbedarf: '+hours(weeklyNeed)+' Std./Woche. Vertragsstunden zusammen: '+hours(sum)+' Std.</small></p>';
+last=null;return;
+}
+let H=[0,0,0],D=[0,0,0];plan.forEach(x=>x.sh.forEach((s,p)=>{H[p]+=s.l;D[p]+=+!!s.l}));
 let rows=plan.map((x,d)=>'<tr><th>'+days[d]+'</th>'+x.sh.map(s=>'<td>'+(s.l?clock(op+s.s*30)+'–'+clock(op+s.e*30)+'<br><small>'+hours(s.l)+' Std.</small>':'frei')+'</td>').join('')+'</tr>').join('');
-let sums=H.map((h,p)=>'<tr><td>E'+(p+1)+'</td><td>'+hours(h)+'</td><td>'+(automatic&&p===2?'automatisch':hours(target[p]))+'</td><td>'+D[p]+' / '+maxdays[p]+'</td></tr>').join('');
-let lower=Math.max(0,weeklyNeed-target[0]-target[1]);
-$('result').innerHTML='<h2>Ergebnis</h2><div class="box '+(errors.length?'bad':'ok')+'">'+(errors.length?'Kein vollständig passender Wochenplan gefunden. Der folgende Vorschlag verletzt noch Regeln. Er ist kein Nachweis, dass die Anforderungen unmöglich sind.':'Geprüft: Alle eingestellten Besetzungs-, Verfügbarkeits-, Stunden- und Tagesregeln erfüllt. Pausen und Ausfälle sind nicht berücksichtigt.')+'</div>'+(errors.length?'<ul>'+errors.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'')+'<p>Mindest-Abdeckungsbedarf: '+hours(weeklyNeed)+' Erzieherinnenstunden/Woche. Rechnerische E3-Untergrenze aus der Stundensumme: '+hours(lower)+' Std. (keine Zusage, dass diese zeitlich ausreichen).</p><div class="scroll"><table><tr><th>Tag</th><th>E1</th><th>E2</th><th>E3</th></tr>'+rows+'</table><table><tr><th>Person</th><th>Geplant (Std.)</th><th>Ziel (Std.)</th><th>Tage / Maximum</th></tr>'+sums+'</table></div>'+(automatic?'<p>E3: gefundener Bedarf '+hours(H[2])+' Std.; zuzüglich unverplanter Zusatzstunden '+hours(reserve)+' Std. = '+hours(H[2]+reserve)+' Std. Vertragsorientierung. Kein garantiertes Minimum.</p>':'<p>Mindestens 4 Stunden pro Dienst. Alle drei Personen arbeiten am '+days[team]+' bis 16:00 Uhr.</p>')+'<button onclick="exportCSV()">Vorschlag als CSV</button><button onclick="window.print()">Drucken / als PDF speichern</button><button onclick="solve()">Erneut suchen</button><p><small>Alle Wochenstunden sind fest. Zusätzliche Besetzung ist erlaubt. Wenige, lange Tage sind ein weicher Wunsch. Die Suche darf davon abweichen, um harte Regeln zu erfüllen. Erneute Suchen können andere Lösungen liefern.</small></p>';
-last={plan,op,H,errors};$('result').scrollIntoView({behavior:'smooth'});
+let sums=H.map((h,p)=>'<tr><td>E'+(p+1)+'</td><td>'+hours(h)+'</td><td>'+hours(target[p])+'</td><td>'+D[p]+' / '+maxdays[p]+'</td></tr>').join('');
+$('result').innerHTML='<h2>Ergebnis</h2><div class="box ok">Geprüft: Alle eingestellten Besetzungs-, Verfügbarkeits-, Stunden- und Tagesregeln erfüllt. Pausen und Ausfälle sind nicht berücksichtigt.</div><p>Mindest-Abdeckungsbedarf: '+hours(weeklyNeed)+' Std./Woche. Vertragsstunden zusammen: '+hours(sum)+' Std. Puffer: '+hours(sum-weeklyNeed)+' Std.</p><div class="scroll"><table><tr><th>Tag</th><th>E1</th><th>E2</th><th>E3</th></tr>'+rows+'</table><table><tr><th>Person</th><th>Geplant (Std.)</th><th>Ziel (Std.)</th><th>Tage / Maximum</th></tr>'+sums+'</table></div><p>Mindestens 4 Stunden pro Dienst. Alle drei Personen arbeiten am '+days[team]+' bis 16:00 Uhr.</p><button onclick="exportCSV()">Plan als CSV</button><button onclick="window.print()">Drucken / als PDF speichern</button><p><small>Es kann weitere gültige Pläne geben. „Wenige, lange Tage“ wird berücksichtigt, soweit möglich.</small></p>';
+last={plan,op,H,errors:[]};if($('result').scrollIntoView)$('result').scrollIntoView({behavior:'smooth'});
+}
 }
 function exportCSV(){if(!last)return;let r=[['Status',last.errors.length?'NICHT ALLE REGELN ERFÜLLT':'Eingestellte Regeln erfüllt – ohne Pausenprüfung'],['Tag','Person','Beginn','Ende','Stunden']];last.plan.forEach((x,d)=>x.sh.forEach((s,p)=>r.push([days[d],'E'+(p+1),s.l?clock(last.op+s.s*30):'',s.l?clock(last.op+s.e*30):'',hours(s.l)])));for(let p=0;p<3;p++)r.push(['Wochensumme','E'+(p+1),'','',hours(last.H[p])]);download('kita-plan.csv','﻿'+r.map(row=>row.map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(';')).join('\r\n'),'text/csv;charset=utf-8')}
 
